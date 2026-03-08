@@ -241,11 +241,9 @@
             margin-bottom: 24px;
         }
 
-        #video-container iframe {
+        #video-container video {
             width: 100%;
             max-width: 560px;
-            aspect-ratio: 16 / 9;
-            border: none;
             border-radius: 16px;
             box-shadow:
                 0 0 60px rgba(255, 77, 166, 0.3),
@@ -343,10 +341,9 @@
     <div id="video-container">
         <div class="congrats-title">🎉 Tebrikler! 🎉</div>
         <div class="congrats-sub">İşte sana özel doğum günü mesajı!</div>
-        <iframe id="youtube-frame" src=""
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen>
-        </iframe>
+        <video id="birthday-video" controls autoplay playsinline>
+            <source src="Zey.mp4" type="video/mp4">
+        </video>
         <button class="replay-btn" onclick="restartGame()">🔄 Tekrar Oyna</button>
     </div>
 
@@ -739,9 +736,10 @@
             const videoContainer = document.getElementById('video-container');
             videoContainer.style.display = 'flex';
 
-            // Set video source
-            document.getElementById('youtube-frame').src =
-                'https://www.youtube.com/embed/Nf6xZw5xRns?si=X759jWSwuLrq8EkC&autoplay=1';
+            // Set video source and play
+            const video = document.getElementById('birthday-video');
+            video.currentTime = 0;
+            video.play();
 
             // Launch confetti!
             launchConfetti();
@@ -751,7 +749,8 @@
             gameWon = false;
             document.getElementById('video-container').style.display = 'none';
             document.getElementById('game-container').style.display = 'flex';
-            document.getElementById('youtube-frame').src = '';
+            document.getElementById('birthday-video').pause();
+            document.getElementById('birthday-video').currentTime = 0;
 
             resizeCanvas();
             ballVX = 0;

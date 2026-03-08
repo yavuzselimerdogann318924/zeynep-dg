@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🎂 Doğum Günün Kutlu Olsun! 🎂</title>
+    <meta name="description" content="Sana özel doğum günü sürprizim! Labirent oyununu oyna ve mesajımı gör.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0a1a;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Background animated gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 50%, rgba(120, 50, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(255, 50, 150, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(50, 200, 255, 0.1) 0%, transparent 50%);
+            z-index: -1;
+            animation: bgPulse 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgPulse {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .title {
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ff6ec7, #ffd93d, #6ec7ff, #ff6ec7);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 4s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .subtitle {
+            font-size: clamp(0.85rem, 3vw, 1rem);
+            color: rgba(255,255,255,0.6);
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: 400;
+        }
+
+        .instruction {
+            font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+            color: rgba(255,255,255,0.4);
+            text-align: center;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .instruction .icon {
+            font-size: 1.2em;
+        }
+
+        #maze-canvas {
+            border-radius: 16px;
+            box-shadow: 
+                0 0 40px rgba(120, 50, 255, 0.3),
+                0 0 80px rgba(120, 50, 255, 0.1),
+                inset 0 0 60px rgba(0,0,0,0.3);
+            background: #12122a;
+            touch-action: none;
+        }
+
+        .timer-bar {
+            margin-top: 12px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+            display: flex;
+            gap: 16px;
+        }
+
+        #permission-btn {
+            display: none;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #7832ff, #ff4da6);
+            color: #fff;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(120, 50, 255, 0.4);
+        }
+
+        #permission-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 30px rgba(120, 50, 255, 0.6);
+        }
+
+        #permission-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Video reveal */
+        #video-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        #video-container .congrats-title {
+            font-size: clamp(1.6rem, 6vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffd93d, #ff6ec7, #6ec7ff);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        #video-container .congrats-sub {
+            font-size: clamp(1rem, 3.5vw, 1.2rem);
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 24px;
+        }
+
+        #video-container iframe {
+            width: 100%;
+            max-width: 560px;
+            aspect-ratio: 16 / 9;
+            border: none;
+            border-radius: 16px;
+            box-shadow: 
+                0 0 60px rgba(255, 77, 166, 0.3),
+                0 0 120px rgba(120, 50, 255, 0.15);
+        }
+
+        .replay-btn {
+            margin-top: 24px;
+            padding: 12px 28px;
+            font-size: 0.9rem;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50px;
+            background: transparent;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .replay-btn:hover {
+            border-color: rgba(255,255,255,0.5);
+            color: #fff;
+        }
+
+        /* Confetti */
+        .confetti-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            overflow: hidden;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            top: -10px;
+            width: 10px;
+            height: 10px;
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Hole pulse animation */
+        @keyframes holePulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 50, 100, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(255, 50, 100, 0.9); }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <div id="game-container">
+        <div class="title">🎂 Mesajı Görmek İçin Oyunu Oyna! 🎂</div>
+        <div class="subtitle">Topu labirentten geçir ve sürprizini bul ✨</div>
+        <div class="instruction">
+            <span class="icon">📱</span>
+            <span id="control-text">Telefonunu eğerek topu kontrol et</span>
+        </div>
+        <button id="permission-btn" onclick="requestMotionPermission()">
+            📱 Sensör İzni Ver & Başla
+        </button>
+        <canvas id="maze-canvas"></canvas>
+        <div class="timer-bar">
+            <span id="timer">⏱ 0s</span>
+            <span id="moves-counter">🔄 0 hamle</span>
+        </div>
+    </div>
+
+    <div id="video-container">
+        <div class="congrats-title">🎉 Tebrikler! 🎉</div>
+        <div class="congrats-sub">İşte sana özel doğum günü mesajı!</div>
+        <iframe id="youtube-frame"
+            src="" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowfullscreen>
+        </iframe>
+        <button class="replay-btn" onclick="restartGame()">🔄 Tekrar Oyna</button>
+    </div>
+
+    <script>
+        // ============================================
+        // MAZE DEFINITION
+        // ============================================
+        // 0 = wall, 1 = path, 2 = start, 3 = end (hole)
+        const MAZE_MAP = [
+            [0,0,0,0,0,0,0,0,0,0,0,0,0],
+            [0,2,1,0,1,1,1,0,1,1,1,1,0],
+            [0,0,1,0,1,0,1,0,1,0,0,1,0],
+            [0,1,1,1,1,0,1,1,1,0,1,1,0],
+            [0,1,0,0,0,0,0,0,0,0,1,0,0],
+            [0,1,1,1,1,1,1,0,1,1,1,1,0],
+            [0,0,0,0,0,0,1,0,1,0,0,1,0],
+            [0,1,1,1,0,1,1,1,1,1,0,1,0],
+            [0,1,0,1,0,1,0,0,0,1,0,1,0],
+            [0,1,0,1,1,1,0,1,1,1,0,1,0],
+            [0,1,0,0,0,0,0,1,0,0,0,1,0],
+            [0,1,1,1,1,1,1,1,0,1,1,3,0],
+            [0,0,0,0,0,0,0,0,0,0,0,0,0],
+        ];
+
+        const ROWS = MAZE_MAP.length;
+        const COLS = MAZE_MAP[0].length;
+
+        // ============================================
+        // CANVAS SETUP
+        // ============================================
+        const canvas = document.getElementById('maze-canvas');
+        const ctx = canvas.getContext('2d');
+
+        let cellSize, ballRadius, holeRadius;
+        let ballX, ballY, ballVX = 0, ballVY = 0;
+        let startX, startY, endX, endY;
+        let gameWon = false;
+        let startTime = Date.now();
+        let moveCount = 0;
+
+        function resizeCanvas() {
+            const maxWidth = Math.min(window.innerWidth - 40, 460);
+            cellSize = Math.floor(maxWidth / COLS);
+            canvas.width = cellSize * COLS;
+            canvas.height = cellSize * ROWS;
+            ballRadius = cellSize * 0.3;
+            holeRadius = cellSize * 0.38;
+
+            // Find start and end positions
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    if (MAZE_MAP[r][c] === 2) {
+                        startX = c * cellSize + cellSize / 2;
+                        startY = r * cellSize + cellSize / 2;
+                    }
+                    if (MAZE_MAP[r][c] === 3) {
+                        endX = c * cellSize + cellSize / 2;
+                        endY = r * cellSize + cellSize / 2;
+                    }
+                }
+            }
+
+            if (!gameWon) {
+                ballX = startX;
+                ballY = startY;
+                ballVX = 0;
+                ballVY = 0;
+            }
+        }
+
+        resizeCanvas();
+        window.addEventListener('resize', () => { if (!gameWon) resizeCanvas(); });
+
+        // ============================================
+        // RENDERING
+        // ============================================
+        let holeGlowPhase = 0;
+
+        function drawMaze() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw cells
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const x = c * cellSize;
+                    const y = r * cellSize;
+                    const val = MAZE_MAP[r][c];
+
+                    if (val === 0) {
+                        // Wall
+                        const wallGrad = ctx.createLinearGradient(x, y, x + cellSize, y + cellSize);
+                        wallGrad.addColorStop(0, '#1a1a3e');
+                        wallGrad.addColorStop(1, '#0d0d25');
+                        ctx.fillStyle = wallGrad;
+                        ctx.fillRect(x, y, cellSize, cellSize);
+
+                        // Subtle border glow
+                        ctx.strokeStyle = 'rgba(120, 50, 255, 0.15)';
+                        ctx.lineWidth = 0.5;
+                        ctx.strokeRect(x, y, cellSize, cellSize);
+                    } else {
+                        // Path
+                        ctx.fillStyle = '#12122a';
+                        ctx.fillRect(x, y, cellSize, cellSize);
+                    }
+                }
+            }
+
+            // Draw goal hole with pulsing glow
+            holeGlowPhase += 0.04;
+            const glowIntensity = 0.4 + 0.3 * Math.sin(holeGlowPhase);
+            
+            // Outer glow
+            const glowGrad = ctx.createRadialGradient(endX, endY, holeRadius * 0.5, endX, endY, holeRadius * 2.5);
+            glowGrad.addColorStop(0, `rgba(255, 50, 120, ${glowIntensity})`);
+            glowGrad.addColorStop(0.5, `rgba(255, 50, 120, ${glowIntensity * 0.3})`);
+            glowGrad.addColorStop(1, 'rgba(255, 50, 120, 0)');
+            ctx.fillStyle = glowGrad;
+            ctx.beginPath();
+            ctx.arc(endX, endY, holeRadius * 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hole itself
+            const holeGrad = ctx.createRadialGradient(endX, endY, 0, endX, endY, holeRadius);
+            holeGrad.addColorStop(0, '#000');
+            holeGrad.addColorStop(0.7, '#1a0520');
+            holeGrad.addColorStop(1, '#330a3d');
+            ctx.fillStyle = holeGrad;
+            ctx.beginPath();
+            ctx.arc(endX, endY, holeRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hole ring
+            ctx.strokeStyle = `rgba(255, 80, 150, ${0.5 + 0.3 * Math.sin(holeGlowPhase)})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(endX, endY, holeRadius + 1, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw start marker
+            ctx.fillStyle = 'rgba(100, 255, 150, 0.15)';
+            ctx.beginPath();
+            ctx.arc(startX, startY, holeRadius * 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw ball
+            drawBall();
+        }
+
+        function drawBall() {
+            // Ball shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(ballX + 2, ballY + 3, ballRadius, ballRadius * 0.7, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ball body - 3D sphere effect
+            const ballGrad = ctx.createRadialGradient(
+                ballX - ballRadius * 0.3, ballY - ballRadius * 0.3, ballRadius * 0.1,
+                ballX, ballY, ballRadius
+            );
+            ballGrad.addColorStop(0, '#fff');
+            ballGrad.addColorStop(0.2, '#6ec7ff');
+            ballGrad.addColorStop(0.7, '#3a7bd5');
+            ballGrad.addColorStop(1, '#1a3a6a');
+            ctx.fillStyle = ballGrad;
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Specular highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.beginPath();
+            ctx.ellipse(
+                ballX - ballRadius * 0.25,
+                ballY - ballRadius * 0.25,
+                ballRadius * 0.25,
+                ballRadius * 0.15,
+                -Math.PI / 4, 0, Math.PI * 2
+            );
+            ctx.fill();
+        }
+
+        // ============================================
+        // PHYSICS & COLLISION
+        // ============================================
+        const FRICTION = 0.92;
+        const ACCEL_SCALE = 0.15;
+        const BOUNCE = 0.3;
+
+        function getCellAt(px, py) {
+            const c = Math.floor(px / cellSize);
+            const r = Math.floor(py / cellSize);
+            if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return 0;
+            return MAZE_MAP[r][c];
+        }
+
+        function isWall(px, py) {
+            return getCellAt(px, py) === 0;
+        }
+
+        function updateBall(ax, ay) {
+            if (gameWon) return;
+
+            // Apply acceleration
+            ballVX += ax * ACCEL_SCALE;
+            ballVY += ay * ACCEL_SCALE;
+
+            // Apply friction
+            ballVX *= FRICTION;
+            ballVY *= FRICTION;
+
+            // Clamp velocity
+            const maxVel = cellSize * 0.4;
+            ballVX = Math.max(-maxVel, Math.min(maxVel, ballVX));
+            ballVY = Math.max(-maxVel, Math.min(maxVel, ballVY));
+
+            // Move with collision detection (X axis)
+            let newX = ballX + ballVX;
+            if (isWall(newX - ballRadius, ballY) || isWall(newX + ballRadius, ballY) ||
+                isWall(newX - ballRadius, ballY - ballRadius * 0.7) || isWall(newX + ballRadius, ballY - ballRadius * 0.7) ||
+                isWall(newX - ballRadius, ballY + ballRadius * 0.7) || isWall(newX + ballRadius, ballY + ballRadius * 0.7)) {
+                ballVX *= -BOUNCE;
+                newX = ballX;
+            }
+            ballX = newX;
+
+            // Move with collision detection (Y axis)
+            let newY = ballY + ballVY;
+            if (isWall(ballX, newY - ballRadius) || isWall(ballX, newY + ballRadius) ||
+                isWall(ballX - ballRadius * 0.7, newY - ballRadius) || isWall(ballX + ballRadius * 0.7, newY - ballRadius) ||
+                isWall(ballX - ballRadius * 0.7, newY + ballRadius) || isWall(ballX + ballRadius * 0.7, newY + ballRadius)) {
+                ballVY *= -BOUNCE;
+                newY = ballY;
+            }
+            ballY = newY;
+
+            // Keep within canvas bounds
+            ballX = Math.max(ballRadius, Math.min(canvas.width - ballRadius, ballX));
+            ballY = Math.max(ballRadius, Math.min(canvas.height - ballRadius, ballY));
+
+            // Track moves
+            if (Math.abs(ballVX) > 0.1 || Math.abs(ballVY) > 0.1) {
+                moveCount++;
+            }
+
+            // Check goal
+            const dx = ballX - endX;
+            const dy = ballY - endY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < holeRadius * 0.8) {
+                winGame();
+            }
+        }
+
+        // ============================================
+        // DEVICE ORIENTATION (PHONE TILT)
+        // ============================================
+        let orientationSupported = false;
+        let tiltX = 0, tiltY = 0;
+
+        function handleOrientation(event) {
+            // beta: front-back tilt (-180 to 180)
+            // gamma: left-right tilt (-90 to 90)
+            let beta = event.beta || 0;   // Front-back
+            let gamma = event.gamma || 0; // Left-right
+
+            // When phone is held upright (portrait), clamp values
+            beta = Math.max(-45, Math.min(45, beta));
+            gamma = Math.max(-45, Math.min(45, gamma));
+
+            // Map to acceleration: gamma = X axis, beta = Y axis
+            tiltX = gamma / 5;  // Left-right tilt → horizontal movement
+            tiltY = beta / 5;   // Front-back tilt → vertical movement
+        }
+
+        async function requestMotionPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' &&
+                typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // iOS 13+ requires permission
+                try {
+                    const response = await DeviceOrientationEvent.requestPermission();
+                    if (response === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                        orientationSupported = true;
+                        document.getElementById('permission-btn').style.display = 'none';
+                    }
+                } catch (e) {
+                    console.error('Permission denied', e);
+                    alert('Sensör izni reddedildi. Lütfen tarayıcı ayarlarından izin verin.');
+                }
+            }
+        }
+
+        // Check for device orientation support
+        if (typeof DeviceOrientationEvent !== 'undefined') {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // iOS — show permission button
+                document.getElementById('permission-btn').style.display = 'block';
+            } else {
+                // Android — just listen
+                window.addEventListener('deviceorientation', handleOrientation);
+                orientationSupported = true;
+            }
+        }
+
+        // ============================================
+        // KEYBOARD CONTROLS (for desktop testing)
+        // ============================================
+        const keysPressed = {};
+
+        window.addEventListener('keydown', (e) => {
+            keysPressed[e.key] = true;
+            e.preventDefault();
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keysPressed[e.key] = false;
+        });
+
+        function getKeyboardAccel() {
+            let ax = 0, ay = 0;
+            const force = 3;
+            if (keysPressed['ArrowLeft'] || keysPressed['a']) ax -= force;
+            if (keysPressed['ArrowRight'] || keysPressed['d']) ax += force;
+            if (keysPressed['ArrowUp'] || keysPressed['w']) ay -= force;
+            if (keysPressed['ArrowDown'] || keysPressed['s']) ay += force;
+            return { ax, ay };
+        }
+
+        // Detect desktop
+        const isDesktop = !('ontouchstart' in window);
+        if (isDesktop) {
+            document.getElementById('control-text').textContent = 'Ok tuşları veya WASD ile topu kontrol et';
+        }
+
+        // ============================================
+        // GAME LOOP
+        // ============================================
+        function gameLoop() {
+            if (gameWon) return;
+
+            // Get acceleration from tilt or keyboard
+            let ax, ay;
+            if (orientationSupported && !isDesktop) {
+                ax = tiltX;
+                ay = tiltY;
+            } else {
+                const kb = getKeyboardAccel();
+                ax = kb.ax;
+                ay = kb.ay;
+            }
+
+            updateBall(ax, ay);
+            drawMaze();
+
+            // Update timer
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timer').textContent = `⏱ ${elapsed}s`;
+            document.getElementById('moves-counter').textContent = `🔄 ${Math.floor(moveCount / 60)} hamle`;
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ============================================
+        // WIN GAME
+        // ============================================
+        function winGame() {
+            gameWon = true;
+
+            // Ball sink animation
+            let sinkFrame = 0;
+            const sinkInterval = setInterval(() => {
+                sinkFrame++;
+                ballRadius *= 0.92;
+                drawMaze();
+                if (sinkFrame > 20) {
+                    clearInterval(sinkInterval);
+                    showVideo();
+                }
+            }, 30);
+        }
+
+        function showVideo() {
+            // Hide game, show video
+            document.getElementById('game-container').style.display = 'none';
+            const videoContainer = document.getElementById('video-container');
+            videoContainer.style.display = 'flex';
+
+            // Set video source
+            document.getElementById('youtube-frame').src = 
+                'https://www.youtube.com/embed/Nf6xZw5xRns?si=X759jWSwuLrq8EkC&autoplay=1';
+
+            // Launch confetti!
+            launchConfetti();
+        }
+
+        function restartGame() {
+            gameWon = false;
+            document.getElementById('video-container').style.display = 'none';
+            document.getElementById('game-container').style.display = 'flex';
+            document.getElementById('youtube-frame').src = '';
+
+            resizeCanvas();
+            ballVX = 0;
+            ballVY = 0;
+            startTime = Date.now();
+            moveCount = 0;
+
+            ballRadius = cellSize * 0.3;
+            gameLoop();
+        }
+
+        // ============================================
+        // CONFETTI
+        // ============================================
+        function launchConfetti() {
+            const container = document.createElement('div');
+            container.className = 'confetti-container';
+            document.body.appendChild(container);
+
+            const colors = ['#ff6ec7', '#ffd93d', '#6ec7ff', '#ff4da6', '#7832ff', '#50fa7b', '#ff5555'];
+
+            for (let i = 0; i < 120; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.width = (Math.random() * 8 + 5) + 'px';
+                piece.style.height = (Math.random() * 8 + 5) + 'px';
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                piece.style.animationDelay = (Math.random() * 1.5) + 's';
+                container.appendChild(piece);
+            }
+
+            setTimeout(() => container.remove(), 5000);
+        }
+
+        // ============================================
+        // BACKGROUND PARTICLES
+        // ============================================
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const colors = ['rgba(120, 50, 255, 0.6)', 'rgba(255, 110, 199, 0.5)', 'rgba(110, 199, 255, 0.5)', 'rgba(255, 217, 61, 0.4)'];
+
+            for (let i = 0; i < 25; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                p.style.animationDuration = (Math.random() * 8 + 6) + 's';
+                p.style.animationDelay = (Math.random() * 10) + 's';
+                container.appendChild(p);
+            }
+        }
+
+        createParticles();
+
+        // ============================================
+        // START
+        // ============================================
+        gameLoop();
+    </script>
+</body>
+</html>

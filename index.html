@@ -173,29 +173,41 @@
             gap: 16px;
         }
 
-        #permission-btn {
-            display: none;
-            padding: 14px 32px;
-            font-size: 1rem;
+        #start-btn {
+            display: block;
+            padding: 16px 40px;
+            font-size: 1.1rem;
             font-family: 'Outfit', sans-serif;
-            font-weight: 600;
+            font-weight: 700;
             border: none;
             border-radius: 50px;
             background: linear-gradient(135deg, #7832ff, #ff4da6);
             color: #fff;
             cursor: pointer;
             margin-bottom: 20px;
+            margin-top: 8px;
             transition: all 0.3s ease;
             box-shadow: 0 4px 20px rgba(120, 50, 255, 0.4);
+            letter-spacing: 0.5px;
         }
 
-        #permission-btn:hover {
+        #start-btn:hover {
             transform: scale(1.05);
             box-shadow: 0 6px 30px rgba(120, 50, 255, 0.6);
         }
 
-        #permission-btn:active {
+        #start-btn:active {
             transform: scale(0.98);
+        }
+
+        .game-area {
+            display: none;
+        }
+
+        .game-area.visible {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         /* Video reveal */
@@ -316,13 +328,15 @@
             <span class="icon">📱</span>
             <span id="control-text">Telefonunu eğerek topu kontrol et</span>
         </div>
-        <button id="permission-btn" onclick="requestMotionPermission()">
-            📱 Sensör İzni Ver & Başla
+        <button id="start-btn" onclick="startGame()">
+            🎮 Oyuna Başla
         </button>
-        <canvas id="maze-canvas"></canvas>
-        <div class="timer-bar">
-            <span id="timer">⏱ 0s</span>
-            <span id="moves-counter">🔄 0 hamle</span>
+        <div class="game-area" id="game-area">
+            <canvas id="maze-canvas"></canvas>
+            <div class="timer-bar">
+                <span id="timer">⏱ 0s</span>
+                <span id="moves-counter">🔄 0 hamle</span>
+            </div>
         </div>
     </div>
 
@@ -609,34 +623,37 @@
             tiltY = beta / 5;   // Front-back tilt → vertical movement
         }
 
-        async function requestMotionPermission() {
-            if (typeof DeviceOrientationEvent !== 'undefined' &&
-                typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS 13+ requires permission
-                try {
-                    const response = await DeviceOrientationEvent.requestPermission();
-                    if (response === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientation);
-                        orientationSupported = true;
-                        document.getElementById('permission-btn').style.display = 'none';
+        let gameStarted = false;
+
+        async function startGame() {
+            // Hide start button, show game area
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('game-area').classList.add('visible');
+
+            // Silently request sensor permission on iOS
+            if (typeof DeviceOrientationEvent !== 'undefined') {
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    try {
+                        const response = await DeviceOrientationEvent.requestPermission();
+                        if (response === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            orientationSupported = true;
+                        }
+                    } catch (e) {
+                        console.error('Sensor permission denied', e);
                     }
-                } catch (e) {
-                    console.error('Permission denied', e);
-                    alert('Sensör izni reddedildi. Lütfen tarayıcı ayarlarından izin verin.');
+                } else {
+                    // Android — just listen
+                    window.addEventListener('deviceorientation', handleOrientation);
+                    orientationSupported = true;
                 }
             }
-        }
 
-        // Check for device orientation support
-        if (typeof DeviceOrientationEvent !== 'undefined') {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS — show permission button
-                document.getElementById('permission-btn').style.display = 'block';
-            } else {
-                // Android — just listen
-                window.addEventListener('deviceorientation', handleOrientation);
-                orientationSupported = true;
-            }
+            // Start the game
+            gameStarted = true;
+            startTime = Date.now();
+            resizeCanvas();
+            gameLoop();
         }
 
         // ============================================
@@ -794,9 +811,10 @@
         createParticles();
 
         // ============================================
-        // START
+        // START — wait for button click
         // ============================================
-        gameLoop();
+        resizeCanvas();
+        drawMaze();
     </script>
 </body>
 
